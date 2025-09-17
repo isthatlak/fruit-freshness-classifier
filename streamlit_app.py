@@ -6,6 +6,8 @@ import numpy as np
 from PIL import Image
 import plotly.express as px
 import plotly.graph_objects as go
+import os
+import gdown
 
 # Configure page
 st.set_page_config(
@@ -14,23 +16,26 @@ st.set_page_config(
     layout="wide"
 )
 
-# Load model (cache it to avoid reloading)
+# ---------------------------
+# Download & Load Model
+# ---------------------------
 @st.cache_resource
-def load_model():
-    try:
-        model = tf.keras.models.load_model('fruit_freshness_model.h5')
-        return model
-    except:
-        st.error("❌ Could not load model. Please ensure 'fruit_freshness_model.h5' is in the same directory.")
-        st.stop()
+def download_model():
+    """Download model from Google Drive if not present"""
+    url = 'https://drive.google.com/uc?id=YOUR_FILE_ID'  # <-- Replace with your file ID
+    output = 'fruit_freshness_model.h5'
+    if not os.path.exists(output):
+        gdown.download(url, output, quiet=False)
+    return tf.keras.models.load_model(output)
 
-# Define classes
+# ---------------------------
+# Define Classes & Colors
+# ---------------------------
 CLASSES = [
     'freshapples', 'freshbanana', 'freshoranges',
     'rottenapples', 'rottenbanana', 'rottenoranges'
 ]
 
-# Color mapping for freshness
 FRESHNESS_COLORS = {
     'fresh': '#28a745',  # Green
     'rotten': '#dc3545'  # Red
@@ -40,21 +45,24 @@ def get_freshness_status(class_name):
     """Determine if fruit is fresh or rotten"""
     return 'fresh' if 'fresh' in class_name.lower() else 'rotten'
 
+# ---------------------------
+# Image Preprocessing
+# ---------------------------
 def preprocess_image(image):
     """Preprocess image for model prediction"""
-    # Convert to RGB and resize
     img_resized = image.convert("RGB").resize((224, 224))
     img_array = np.array(img_resized).astype(np.float32) / 255.0
     img_batch = np.expand_dims(img_array, axis=0)
     return img_batch
 
+# ---------------------------
+# Prediction Chart
+# ---------------------------
 def create_prediction_chart(predictions, classes):
-    """Create interactive prediction probability chart"""
     prob_data = []
     for cls, prob in zip(classes, predictions):
         freshness = get_freshness_status(cls)
         prob_data.append({'Class': cls, 'Probability': prob, 'Freshness': freshness})
-
     prob_data = sorted(prob_data, key=lambda x: x['Probability'], reverse=True)
 
     fig = px.bar(
@@ -74,10 +82,11 @@ def create_prediction_chart(predictions, classes):
     )
     return fig
 
+# ---------------------------
+# Confidence Gauge
+# ---------------------------
 def show_confidence_gauge(confidence, freshness):
-    """Display a radial gauge for prediction confidence"""
     color = "green" if freshness == 'fresh' else "red"
-    
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=confidence * 100,
@@ -95,9 +104,10 @@ def show_confidence_gauge(confidence, freshness):
     fig.update_layout(height=350)
     st.plotly_chart(fig, use_container_width=True)
 
-# Main app
+# ---------------------------
+# Main App
+# ---------------------------
 def main():
-    # Header
     st.markdown("""
     # 🍎 Fruit Freshness Classifier
     Upload an image of a fruit to determine if it's **fresh** or **rotten**!
@@ -107,7 +117,7 @@ def main():
 
     # Load model
     with st.spinner("Loading AI model..."):
-        model = load_model()
+        model = download_model()
 
     # Sidebar
     with st.sidebar:
@@ -137,20 +147,16 @@ def main():
             help="Upload a clear image of an apple, banana, or orange"
         )
 
-        # Camera input toggle
+        # Camera input
         camera_image = None
         if st.button("📷 Take a photo with your camera"):
             camera_image = st.camera_input("Take a photo")
 
-        # Decide which image to use
         image_source = camera_image if camera_image else uploaded_file
 
-        # Display uploaded/captured image
         if image_source is not None:
             image = Image.open(image_source)
-            st.image(image, caption='Selected Image', width=350)
-            
-            # Analyze button
+            st.image(image, caption='Selected Image', width=300)  # smaller width
             if st.button("🔍 Analyze Fruit", type="primary"):
                 with st.spinner("Analyzing image..."):
                     img_array = preprocess_image(image)
@@ -158,10 +164,8 @@ def main():
                     predicted_class_idx = np.argmax(predictions)
                     predicted_class = CLASSES[predicted_class_idx]
                     confidence = float(predictions[predicted_class_idx])
-                    
                     freshness = get_freshness_status(predicted_class)
                     
-                    # Save results in session state
                     st.session_state.predictions = predictions
                     st.session_state.predicted_class = predicted_class
                     st.session_state.confidence = confidence
@@ -175,21 +179,16 @@ def main():
             predicted_class = st.session_state.predicted_class
             confidence = st.session_state.confidence
 
-            # Display main prediction
             if freshness == 'fresh':
                 st.success(f"✅ **{predicted_class.upper()}**")
             else:
                 st.error(f"❌ **{predicted_class.upper()}**")
-            
-            # Show confidence gauge
-            show_confidence_gauge(confidence, freshness)
 
-            # Detailed predictions chart
+            show_confidence_gauge(confidence, freshness)
             st.subheader("📊 Detailed Predictions")
             chart = create_prediction_chart(st.session_state.predictions, CLASSES)
             st.plotly_chart(chart, use_container_width=True)
 
-            # Recommendations
             st.subheader("💡 Recommendations")
             if freshness == 'fresh':
                 st.markdown("""
@@ -205,11 +204,9 @@ def main():
                 - Dispose properly
                 - Check other fruits for contamination
                 """)
-
         else:
             st.info("👆 Upload an image and click 'Analyze Fruit' to see results")
-        
-    # Footer
+
     st.markdown("---")
     st.subheader("ℹ️ About This App")
     st.markdown("""
