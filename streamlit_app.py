@@ -25,7 +25,7 @@ def download_model():
     and load it into memory.
     """
     model_path = hf_hub_download(
-        repo_id="isthatlak/fruit-freshness-model",
+        repo_id="isthatlak/fruit-freshness-model.h5",
         filename="fruit_freshness_model.h5"
     )
     return tf.keras.models.load_model(model_path)
