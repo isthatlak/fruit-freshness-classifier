@@ -10,7 +10,7 @@ from huggingface_hub import hf_hub_download
 
 # Configure page
 st.set_page_config(
-    page_title="🍎 Fruit Freshness Classifier",
+    page_title="Fruit Freshness Classifier",
     page_icon="🍎",
     layout="wide"
 )
@@ -49,6 +49,14 @@ def get_freshness_status(class_name):
     """Determine if fruit is fresh or rotten"""
     return 'fresh' if 'fresh' in class_name.lower() else 'rotten'
 
+def format_class_name(class_name):
+    """
+    Convert 'freshapples' -> 'Fresh Apples' or 'rottenbanana' -> 'Rotten Banana'
+    """
+    freshness = 'Fresh' if 'fresh' in class_name.lower() else 'Rotten'
+    fruit = class_name.lower().replace('fresh', '').replace('rotten', '')
+    return f"{freshness} {fruit.capitalize()}"
+
 # ---------------------------
 # Image Preprocessing
 # ---------------------------
@@ -66,7 +74,11 @@ def create_prediction_chart(predictions, classes):
     prob_data = []
     for cls, prob in zip(classes, predictions):
         freshness = get_freshness_status(cls)
-        prob_data.append({'Class': cls, 'Probability': prob, 'Freshness': freshness})
+        prob_data.append({
+            'Class': format_class_name(cls),  # formatted name
+            'Probability': prob,
+            'Freshness': freshness
+        })
     prob_data = sorted(prob_data, key=lambda x: x['Probability'], reverse=True)
 
     fig = px.bar(
@@ -169,9 +181,11 @@ def main():
                     predicted_class = CLASSES[predicted_class_idx]
                     confidence = float(predictions[predicted_class_idx])
                     freshness = get_freshness_status(predicted_class)
+                    display_name = format_class_name(predicted_class)
                     
                     st.session_state.predictions = predictions
                     st.session_state.predicted_class = predicted_class
+                    st.session_state.display_name = display_name
                     st.session_state.confidence = confidence
                     st.session_state.freshness = freshness
                     st.session_state.image_array = img_array
@@ -180,13 +194,13 @@ def main():
         st.header("🎯 Analysis Results")
         if hasattr(st.session_state, 'predicted_class'):
             freshness = st.session_state.freshness
-            predicted_class = st.session_state.predicted_class
             confidence = st.session_state.confidence
+            display_name = st.session_state.display_name
 
             if freshness == 'fresh':
-                st.success(f"✅ **{predicted_class.upper()}**")
+                st.success(f"✅ **{display_name}**")
             else:
-                st.error(f"❌ **{predicted_class.upper()}**")
+                st.error(f"❌ **{display_name}**")
 
             show_confidence_gauge(confidence, freshness)
             st.subheader("📊 Detailed Predictions")
@@ -195,15 +209,15 @@ def main():
 
             st.subheader("💡 Recommendations")
             if freshness == 'fresh':
-                st.markdown("""
-                🟢 **This fruit appears fresh!**
+                st.markdown(f"""
+                🟢 **{display_name} appears fresh!**
                 - Safe to eat
                 - Store properly
                 - Consume within recommended timeframe
                 """)
             else:
-                st.markdown("""
-                🔴 **This fruit appears rotten!**
+                st.markdown(f"""
+                🔴 **{display_name} appears rotten!**
                 - Do not consume
                 - Dispose properly
                 - Check other fruits for contamination

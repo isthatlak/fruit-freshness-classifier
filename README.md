@@ -19,7 +19,7 @@ An AI-powered web application that classifies fruit freshness using deep learnin
 
 ## 🚀 Live Demo
 
-[Try the app here](#) *(Will be updated after deployment)*
+[Try the app here!](https://fruit-freshness-classifier-isthatlak.streamlit.app/)
 
 ## 📸 Screenshots
 
