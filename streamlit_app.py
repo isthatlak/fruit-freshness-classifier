@@ -4,13 +4,12 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-import cv2
 import plotly.express as px
 import plotly.graph_objects as go
 
 # Configure page
 st.set_page_config(
-    page_title="Fruit Freshness Classifier",
+    page_title="🍎 Fruit Freshness Classifier",
     page_icon="🍎",
     layout="wide"
 )
@@ -25,7 +24,7 @@ def load_model():
         st.error("❌ Could not load model. Please ensure 'fruit_freshness_model.h5' is in the same directory.")
         st.stop()
 
-# Define classes (based on your dataset)
+# Define classes
 CLASSES = [
     'freshapples', 'freshbanana', 'freshoranges',
     'rottenapples', 'rottenbanana', 'rottenoranges'
@@ -43,10 +42,10 @@ def get_freshness_status(class_name):
 
 def preprocess_image(image):
     """Preprocess image for model prediction"""
-    img_array = np.array(image)
-    img_resized = cv2.resize(img_array, (224, 224))
-    img_normalized = img_resized.astype(np.float32) / 255.0
-    img_batch = np.expand_dims(img_normalized, axis=0)
+    # Convert to RGB and resize
+    img_resized = image.convert("RGB").resize((224, 224))
+    img_array = np.array(img_resized).astype(np.float32) / 255.0
+    img_batch = np.expand_dims(img_array, axis=0)
     return img_batch
 
 def create_prediction_chart(predictions, classes):
@@ -158,7 +157,7 @@ def main():
                     predictions = model.predict(img_array)[0]
                     predicted_class_idx = np.argmax(predictions)
                     predicted_class = CLASSES[predicted_class_idx]
-                    confidence = float(predictions[predicted_class_idx])  # ensure float for Streamlit
+                    confidence = float(predictions[predicted_class_idx])
                     
                     freshness = get_freshness_status(predicted_class)
                     
