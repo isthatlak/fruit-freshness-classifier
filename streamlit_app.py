@@ -1,4 +1,4 @@
-# streamlit_app.py - Fruit Freshness Classification Web App
+# streamlit_app.py - Fruit Freshness Classification Web App (Hugging Face)
 
 import streamlit as st
 import tensorflow as tf
@@ -6,8 +6,7 @@ import numpy as np
 from PIL import Image
 import plotly.express as px
 import plotly.graph_objects as go
-import os
-import gdown
+from huggingface_hub import hf_hub_download
 
 # Configure page
 st.set_page_config(
@@ -17,16 +16,19 @@ st.set_page_config(
 )
 
 # ---------------------------
-# Download & Load Model
+# Download & Load Model from Hugging Face
 # ---------------------------
 @st.cache_resource
 def download_model():
-    """Download model from Google Drive if not present"""
-    url = 'https://drive.google.com/file/d/1x-Kjgmd-QpBjnJ90ql7CLg0NPeB7Y-i_/view?usp=sharing'
-    output = 'fruit_freshness_model.h5'
-    if not os.path.exists(output):
-        gdown.download(url, output, quiet=False)
-    return tf.keras.models.load_model(output)
+    """
+    Download the TensorFlow .h5 model from Hugging Face
+    and load it into memory.
+    """
+    model_path = hf_hub_download(
+        repo_id="isthatlak/fruit-freshness-model",
+        filename="fruit_freshness_model.h5"
+    )
+    return tf.keras.models.load_model(model_path)
 
 # ---------------------------
 # Define Classes & Colors
@@ -156,7 +158,7 @@ def main():
 
         if image_source is not None:
             image = Image.open(image_source)
-            st.image(image, caption='Selected Image', width=300)  # smaller width
+            st.image(image, caption='Selected Image', width=300)
             if st.button("🔍 Analyze Fruit", type="primary"):
                 with st.spinner("Analyzing image..."):
                     img_array = preprocess_image(image)
