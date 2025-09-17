@@ -22,7 +22,7 @@ st.set_page_config(
 @st.cache_resource
 def download_model():
     """Download model from Google Drive if not present"""
-    url = 'https://drive.google.com/uc?id=YOUR_FILE_ID'  # <-- Replace with your file ID
+    url = 'https://drive.google.com/file/d/1x-Kjgmd-QpBjnJ90ql7CLg0NPeB7Y-i_/view?usp=sharing'
     output = 'fruit_freshness_model.h5'
     if not os.path.exists(output):
         gdown.download(url, output, quiet=False)
