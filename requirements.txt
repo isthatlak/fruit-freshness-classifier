@@ -12,5 +12,5 @@ scikit-learn>=1.3.0
 streamlit-option-menu>=0.3.6
 streamlit-extras>=0.3.0
 
-# Needed for downloading model from Google Drive
-gdown>=4.7.1
+# Needed for downloading model from Hugging Face
+huggingface_hub>=0.18.1
