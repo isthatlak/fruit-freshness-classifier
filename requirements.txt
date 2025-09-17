@@ -1,0 +1,14 @@
+# requirements.txt
+streamlit>=1.28.0
+tensorflow>=2.13.0
+numpy>=1.24.0
+opencv-python>=4.8.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+Pillow>=10.0.0
+scikit-learn>=1.3.0
+
+# For deployment (optional)
+streamlit-option-menu>=0.3.6
+streamlit-extras>=0.3.0
